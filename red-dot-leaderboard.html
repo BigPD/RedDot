@@ -1,0 +1,112 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Red Dot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { margin: 0; font-family: sans-serif; text-align: center; background: #f0f0f0; }
+    h1 { margin: 20px; }
+    #game { position: relative; width: 100%; height: 60vh; background: #fff; overflow: hidden; margin-bottom: 20px; }
+    .circle {
+      width: 50px; height: 50px;
+      border-radius: 50%;
+      background: red;
+      position: absolute;
+      cursor: pointer;
+    }
+    #score { font-size: 24px; margin: 10px; }
+    #timer { font-size: 20px; }
+    .ad-banner { width: 100%; height: 90px; background: #ccc; margin-top: 10px; line-height: 90px; }
+    #leaderboard { margin-top: 20px; }
+    table { margin: 0 auto; border-collapse: collapse; }
+    th, td { border: 1px solid #333; padding: 8px 16px; background: #fff; }
+  </style>
+</head>
+<body>
+
+<h1>Red Dot</h1>
+<div class="ad-banner">Ad Banner Placeholder</div>
+<div id="score">Score: 0</div>
+<div id="timer">Time: 30s</div>
+<div id="game"></div>
+<div class="ad-banner">Ad Banner Placeholder</div>
+
+<h2>Leaderboard</h2>
+<div id="leaderboard"></div>
+
+<script>
+  let score = 0;
+  let time = 30;
+  const game = document.getElementById('game');
+  const scoreDisplay = document.getElementById('score');
+  const timerDisplay = document.getElementById('timer');
+  const leaderboardDiv = document.getElementById('leaderboard');
+
+  const badWords = ['fuck','shit','bitch','ass','dick','cunt','pussy','nigger','faggot','cock','whore','slut'];
+
+  let leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+
+  function updateLeaderboardDisplay() {
+    leaderboardDiv.innerHTML = '<table><tr><th>Rank</th><th>Name</th><th>Score</th></tr>' +
+      leaderboard
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 10)
+        .map((entry, index) => `<tr><td>${index + 1}</td><td>${entry.name}</td><td>${entry.score}</td></tr>`)
+        .join('') + '</table>';
+  }
+
+  function validateName(name) {
+    const cleaned = name.toLowerCase().replace(/[^a-z]/g, '');
+    return !badWords.some(word => cleaned.includes(word));
+  }
+
+  function endGame() {
+    game.innerHTML = '';
+    let playerName = prompt("Game Over! Enter your name for the leaderboard:");
+    if (!playerName || !validateName(playerName)) {
+      alert("Invalid or inappropriate name. Entry not saved.");
+    } else {
+      leaderboard.push({ name: playerName.substring(0, 15), score: score });
+      localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+    }
+    updateLeaderboardDisplay();
+  }
+
+  function spawnCircle() {
+    const circle = document.createElement('div');
+    circle.className = 'circle';
+    circle.style.top = Math.random() * (game.clientHeight - 50) + 'px';
+    circle.style.left = Math.random() * (game.clientWidth - 50) + 'px';
+    circle.onclick = () => {
+      score++;
+      scoreDisplay.textContent = 'Score: ' + score;
+      circle.remove();
+      spawnCircle();
+    };
+    game.appendChild(circle);
+  }
+
+  function startGame() {
+    score = 0;
+    time = 30;
+    scoreDisplay.textContent = 'Score: 0';
+    timerDisplay.textContent = 'Time: 30s';
+    spawnCircle();
+    const timer = setInterval(() => {
+      time--;
+      timerDisplay.textContent = 'Time: ' + time + 's';
+      if (time <= 0) {
+        clearInterval(timer);
+        endGame();
+      }
+    }, 1000);
+  }
+
+  updateLeaderboardDisplay();
+  startGame();
+</script>
+
+</body>
+</html>
